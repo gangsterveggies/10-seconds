@@ -1,0 +1,28 @@
+<head>
+  <title>10 Seconds</title>
+</head>
+
+<body>
+  {{#if currentUser}}
+    {{> main}}
+  {{else}}
+    {{> loginButtons}}
+  {{/if}}
+</body>
+
+<template name="main">
+  <div id="game">
+    <p id="current-number">{{currentNumber}}</p>
+
+    <input type="button" id="start-game-button" value="Start"/>
+    <input type="button" id="stop-game-button" value="Stop"/>
+
+    <p>Here {{currentTime}}</p>
+  </div>
+
+  <ul>
+    {{#each results}}
+      <li>{{number}} by {{emails}}</li>
+    {{/each}}
+  </ul>
+</template>
