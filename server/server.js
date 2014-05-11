@@ -1,96 +1,162 @@
 Accounts.onCreateUser(function(options, user) {
-  user.result = 1;
+  user.result = 0;
   user.played = false;
 
   return user;
 });
 
-var currentTime;
-var gameRunning = false;
+RoomStream = new Meteor.Stream('room_streams');
+
+RoomStream.permissions.read(function(eventName, roomId, arg1) {
+  if (roomId) {
+    var room = Rooms.findOne(roomId);
+    var user = Meteor.users.findOne(this.userId);
+
+    if (user && room) {
+      if (room.hostId === user._id || _.contains(room.users, user._id)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}, false);
+
+RoomStream.permissions.write(function(eventName, roomId, arg1) {
+  return false;
+}, false);
+
+
+var roomInterval = { };
 
 /* Paredes Distribution */
 var getNumber = function() {
-  if (!gameRunning) {
-    return 1;
-  }
-
-  var a = 7;
-  var res = Math.ceil(a * Math.log(1 / (1 - Math.random())));
+  var res = Math.ceil(7 * Math.log(1 / (1 - Math.random())));
 
   return res;
 };
 
+var gameOver = function(room) {
+  RoomStream.emit('stop', room._id);
+
+  Rooms.update(
+    { _id: room._id },
+    { $set: { status: 0,
+              numbersLeft: 0,
+              currentNumber: 0 }
+    }
+  );
+};
+
 var resetResults = function() {
-  Results.remove({ });
-
-  var userList = Meteor.users.find({ });
-
-  userList.forEach(function(user) {
-    Meteor.users.update(
-      { emails: user.emails },
-      { $set: { result: 1, played: false } }
-    );
-  });
+  Meteor.users.update(
+    { },
+    { $set: { result: 0, played: false, roomId: 0 } },
+    { multi: true }
+  );
 };
 
 
 Meteor.startup(function() {
   resetResults();
+  Rooms.remove({ });
 });
 
 Meteor.methods({
-  /* Get current number */
-  getNumber: function() {
-    if (!gameRunning) {
-      return 1;
-    }
-
-    return Numbers.findOne({ }, { sort: { index: -1 } }).value;
-  },
-
   /* Set result for user */
-  setResult: function(newResult) {
-    if (!gameRunning) {
-      return false;
+  setResult: function() {
+    var user = Meteor.user();
+
+    if (!user || user.roomId === "") {
+      return 0;
     }
 
-    if (Meteor.user().played) {
-      return false;
+    var room = Rooms.findOne(user.roomId);
+
+    if (!room || room.status !== 1) {
+      return 0;
     }
 
     Meteor.users.update(
-      { emails: Meteor.user().emails },
-      { $set: { result: newResult, played: true }}
+      user._id,
+      { $set: { result: room.currentNumber, played: true }}
     );
 
-    Results.insert({ number: newResult, emails: Meteor.user().emails[0].address });
-
-    return currentTime;
-  },
-
-  /* Get current time */
-  getCurrentTime: function() {
-    return currentTime;
+    return room.currentNumber;
   },
   
   /* Start game function, called by host */
   startGame: function() {
-    gameRunning = true;
+    var user = Meteor.user();
 
-    currentTime = 10;
+    if (!user || user.roomId === "") {
+      return;
+    }
 
-    Meteor.setInterval(function() {
-      var currentIndex = Numbers.find({ }).fetch().length;
+    var room = Rooms.findOne(user.roomId);
 
-      currentTime--;
-      
-      Numbers.insert({ index: currentIndex, value: getNumber() });
-    }, 1000);
+    if (!room || room.hostId !== user._id || room.status !== 0) {
+      return;
+    }
+
+    Rooms.update(
+      { _id: room._id },
+      { $set: { status: 1,
+                numbersLeft: 10,
+                currentNumber: getNumber() }
+      }
+    );
+
+    Meteor.users.update(
+      { roomId: room._id },
+      { $set: { result: 0, played: false } },
+      { multi: true }
+    );
+
+    goRound(room);
   },
 
   /* Stop game function, called by host */
   stopGame: function() {
-    gameRunning = false;
-    resetResults();
+    var user = Meteor.user();
+
+    if (!user || user.roomId === "") {
+      return;
+    }
+
+    var room = Rooms.findOne(user.roomId);
+
+    if (!room || room.hostId != user._id) {
+      return;
+    }
+
+    Meteor.clearInterval(roominterval[room._id]);
+    delete sessionHash[user._id];
+    gameOver(room._id);
   }
 });
+
+var goRound = function(room) {
+  var croom = Rooms.findOne(room._id);
+
+  if (croom.numbersLeft === 0) {
+    Meteor.clearTimeout(roomInterval[room._id]);
+    delete roomInterval[room._id];
+
+    gameOver(croom);
+  } else {
+    var number = getNumber();
+
+    Rooms.update(
+      { _id: room._id },
+      { $set: { currentNumber: number,
+                numbersLeft: (croom.numbersLeft - 1) }
+      }
+    );
+
+    RoomStream.emit('start', room._id, number);
+    roomInterval[room._id] = Meteor.setTimeout(function() {
+      goRound(room);
+    }, 1000);
+  }
+};

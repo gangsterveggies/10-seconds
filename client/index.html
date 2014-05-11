@@ -3,26 +3,94 @@
 </head>
 
 <body>
+  {{> router}}
+</body>
+
+<template name="router">
   {{#if currentUser}}
-    {{> main}}
+    {{#if inRoom}}
+      {{> main}}
+    {{else}}
+      {{> roomList}}
+    {{/if}}
   {{else}}
     {{> loginButtons}}
   {{/if}}
-</body>
+</template>
 
-<template name="main">
-  <div id="game">
-    <p id="current-number">{{currentNumber}}</p>
-
-    <input type="button" id="start-game-button" value="Start"/>
-    <input type="button" id="stop-game-button" value="Stop"/>
-
-    <p>Here {{currentTime}}</p>
+<template name="roomList">
+  <div id="new-room">
+    <form class="form-inline text-center">
+      <input type="submit" value="Create Room" class="btn btn-primary"/>
+    </form>
   </div>
 
-  <ul>
-    {{#each results}}
-      <li>{{number}} by {{emails}}</li>
-    {{/each}}
-  </ul>
+  {{#if roomCount}}
+    <table class="table table-striped" id="room-table">
+      <thead>
+        <tr>
+          <th class="host">Host</th>
+          <th class="join"></th>
+        </tr>
+      </thead>
+    
+      <tbody>
+        {{#each rooms}}
+          {{> room}}
+        {{/each}}
+      </tbody>
+    </table>
+  {{/if}}
+</template>
+
+<template name="room">
+  <tr>
+    <td>{{hostMail}}</td>
+    <td><a href="#" class="join-button btn btn-primary">Join</a></td>
+  </tr>
+</template>
+
+<template name="main">
+  {{#if inGame}}
+    <div id="game">
+      <p id="current-number"><a href="#" id="choose-number">{{currentNumber}}</a></p>
+
+      {{#if chosen}}
+        <p>You chose {{chosenNumber}}.</p>
+      {{/if}}
+
+      <p>{{currentTime}}</p>
+    </div>
+
+    <h3>Users in Room</h3>
+    <ul>
+      {{#each users}}
+        <li>{{email}}</li>
+      {{/each}}
+    </ul>
+  {{else}}
+    <h3>Users in Room</h3>
+    <ul>
+      {{#each users}}
+        <li>{{email}}</li>
+      {{/each}}
+    </ul>
+
+    <input type="button" id="start-game-button" value="Start"/>
+
+    {{#if lastRound}}
+      <h3>Last Round</h3>
+      <ul>
+        {{#each results}}
+          <li>{{email}} scored {{number}}</li>
+        {{/each}}
+      </ul>
+
+      {{#if winner}}
+        <p>Round Winner: {{roundWinner}} with {{roundWinnerScore}}!</p>
+      {{else}}
+        <p>There was a tie!</p>
+      {{/if}}
+    {{/if}}   
+  {{/if}}
 </template>
