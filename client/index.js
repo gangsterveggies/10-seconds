@@ -2,19 +2,23 @@ Meteor.subscribe('ownUser');
 Meteor.subscribe('rooms');
 Meteor.subscribe('users');
 
-var currentNumber = 0;
-var currentNumberDeps = new Deps.Dependency;;
-var chosenNumber = -1;
-var chosenNumberDeps = new Deps.Dependency;
-var startTime = -1;
-var timeLeftDeps = new Deps.Dependency;
-var lastRound = 0;
-var lastRoundDeps = new Deps.Dependency;
-var userWinner;
-var scoreWinner = -1;
-var updateTime;
-var inGameDeps = new Deps.Dependency;
-var inGame = false;
+var gameVariables = {
+  currentNumber: 0,
+  chosenNumber: -1,
+  startTime: -1,
+  lastRound: 0,
+  scoreWinner: -1,
+  updateTime: 0,
+  inGame: false
+};
+
+var gameDependencies = {
+  currentNumberDeps: new Deps.Dependency,
+  chosenNumberDeps: new Deps.Dependency,
+  timeLeftDeps: new Deps.Dependency,
+  lastRoundDeps: new Deps.Dependency,
+  inGameDeps: new Deps.Dependency
+};
 
 RoomStream = new Meteor.Stream('room_streams');
 
@@ -59,34 +63,34 @@ Template.router.inRoom = function() {
 };
 
 Template.main.currentNumber = function() {
-  currentNumberDeps.depend();
+  gameDependencies.currentNumberDeps.depend();
 
-  return currentNumber.toString();
+  return gameVariables.currentNumber.toString();
 };
 
 Template.main.chosenNumber = function() {
-  chosenNumberDeps.depend();
+  gameDependencies.chosenNumberDeps.depend();
 
-  return chosenNumber.toString();
+  return gameVariables.chosenNumber.toString();
 };
 
 Template.main.chosen = function() {
-  chosenNumberDeps.depend();
+  gameDependencies.chosenNumberDeps.depend();
 
-  return chosenNumber >= 0;
+  return gameVariables.chosenNumber >= 0;
 };
 
 Template.main.inGame = function() {
-  inGameDeps.depend();
+  gameDependencies.inGameDeps.depend();
 
-  return inGame > 0;
+  return gameVariables.inGame > 0;
 };
 
 Template.main.currentTime = function() {
-  timeLeftDeps.depend();
+  gameDependencies.timeLeftDeps.depend();
 
   var timeStr = "";
-  var tmp = Math.max(10000.0 - (Date.now() - startTime), 0.0);
+  var tmp = Math.max(10000.0 - (Date.now() - gameVariables.startTime), 0.0);
 
   timeStr += (Math.floor(tmp / 1000)).toString() + ":";
   tmp -= Math.floor(tmp / 1000) * 1000;
@@ -120,7 +124,7 @@ Template.main.results = function() {
 
   for (var i = 0; i < usernames.length; i++) {
     var user = Meteor.users.findOne(usernames[i]);
-    
+
     users.push({ email: user.emails[0].address, number: user.result });
   }
 
@@ -157,23 +161,23 @@ Template.main.roundWinnerScore = function() {
 };
 
 Template.main.lastRound = function() {
-  lastRoundDeps.depend();
+  gameDependencies.lastRoundDeps.depend();
 
-  return lastRound;
+  return gameVariables.lastRound;
 };
 
 Template.main.events({
   'click #choose-number': function(event) {
     event.preventDefault();
 
-    if (chosenNumber < 0) {
+    if (gameVariables.chosenNumber < 0) {
       Meteor.call('setResult', function(err, number) {
         if (err) {
           console.log('An error occured: ' + err);
         } else {
-          chosenNumber = number;
+          gameVariables.chosenNumber = number;
 
-          chosenNumberDeps.changed();
+          gameDependencies.chosenNumberDeps.changed();
         }
       });
     }
@@ -189,36 +193,36 @@ Template.main.events({
 });
 
 RoomStream.on("start", function(roomId, number) {
-  currentNumber = number;
-  currentNumberDeps.changed();
+  gameVariables.currentNumber = number;
+  gameDependencies.currentNumberDeps.changed();
 
-  if (startTime < 0) {
-    startTime = Date.now();
+  if (gameVariables.startTime < 0) {
+    gameVariables.startTime = Date.now();
 
-    inGame = true;
-    inGameDeps.changed();
+    gameVariables.inGame = true;
+    gameDependencies.inGameDeps.changed();
   }
 
-  Meteor.clearInterval(updateTime);
+  Meteor.clearInterval(gameVariables.updateTime);
   updateTime = Meteor.setInterval(function() {
-    timeLeftDeps.changed();    
+    gameDependencies.timeLeftDeps.changed();
   }, 100);
 });
 
 RoomStream.on("stop", function() {
   Meteor.clearInterval(updateTime);
 
-  currentNumber = 0;
-  currentNumberDeps.changed();
+  gameVariables.currentNumber = 0;
+  gameDependencies.currentNumberDeps.changed();
 
-  chosenNumber = -1;
-  chosenNumberDeps.changed();
+  gameVariables.chosenNumber = -1;
+  gameDependencies.chosenNumberDeps.changed();
 
-  startTime = -1;
+  gameVariables.startTime = -1;
 
-  inGame = false;
-  inGameDeps.changed();
+  gameVariables.inGame = false;
+  gameDependencies.inGameDeps.changed();
 
-  lastRound = 1;
-  lastRoundDeps.changed();
+  gameVariables.lastRound = 1;
+  gameDependencies.lastRoundDeps.changed();
 });
