@@ -3,15 +3,7 @@ Meteor.subscribe('rooms');
 Meteor.subscribe('users');
 
 var Game = {
-  variables: {
-    currentNumber: 0,
-    chosenNumber: -1,
-    startTime: -1,
-    lastRound: 0,
-    scoreWinner: -1,
-    updateTime: 0,
-    inGame: false
-  },
+  variables: { },
 
   dependencies: {
     currentNumberDeps: new Deps.Dependency,
@@ -19,8 +11,26 @@ var Game = {
     timeLeftDeps: new Deps.Dependency,
     lastRoundDeps: new Deps.Dependency,
     inGameDeps: new Deps.Dependency
+  },
+
+  resetVariables: function() {
+    this.variables.currentNumber = 0;
+    this.variables.chosenNumber = -1;
+    this.variables.startTime = -1;
+    this.variables.lastRound = 0;
+    this.variables.scoreWinner = -1;
+    this.variables.updateTime = 0;
+    this.variables.inGame = false;
+
+    this.dependencies.currentNumberDeps.changed();
+    this.dependencies.chosenNumberDeps.changed();
+    this.dependencies.timeLeftDeps.changed();
+    this.dependencies.lastRoundDeps.changed();
+    this.dependencies.inGameDeps.changed();
   }
 };
+
+Game.resetVariables();
 
 RoomStream = new Meteor.Stream('room_streams');
 
@@ -211,20 +221,9 @@ RoomStream.on("start", function(roomId, number) {
   }, 100);
 });
 
-RoomStream.on("stop", function() {
+RoomStream.on('stop', function() {
   Meteor.clearInterval(updateTime);
 
-  Game.variables.currentNumber = 0;
-  Game.dependencies.currentNumberDeps.changed();
-
-  Game.variables.chosenNumber = -1;
-  Game.dependencies.chosenNumberDeps.changed();
-
-  Game.variables.startTime = -1;
-
-  Game.variables.inGame = false;
-  Game.dependencies.inGameDeps.changed();
-
+  Game.resetVariables();
   Game.variables.lastRound = 1;
-  Game.dependencies.lastRoundDeps.changed();
 });
