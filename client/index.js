@@ -9,7 +9,7 @@ var Game = {
     currentNumberDeps: new Deps.Dependency,
     chosenNumberDeps: new Deps.Dependency,
     timeLeftDeps: new Deps.Dependency,
-    lastRoundDeps: new Deps.Dependency,
+    onRoundEndDeps: new Deps.Dependency,
     inGameDeps: new Deps.Dependency
   },
 
@@ -17,7 +17,7 @@ var Game = {
     this.variables.currentNumber = 0;
     this.variables.chosenNumber = -1;
     this.variables.startTime = -1;
-    this.variables.lastRound = 0;
+    this.variables.onRoundEnd = 0;
     this.variables.scoreWinner = -1;
     this.variables.updateTime = 0;
     this.variables.inGame = false;
@@ -25,7 +25,7 @@ var Game = {
     this.dependencies.currentNumberDeps.changed();
     this.dependencies.chosenNumberDeps.changed();
     this.dependencies.timeLeftDeps.changed();
-    this.dependencies.lastRoundDeps.changed();
+    this.dependencies.onRoundEndDeps.changed();
     this.dependencies.inGameDeps.changed();
   }
 };
@@ -101,16 +101,16 @@ Template.main.inGame = function() {
 Template.main.currentTime = function() {
   Game.dependencies.timeLeftDeps.depend();
 
-  var timeStr = "";
+  var timeStr = '';
   var tmp = Math.max(10000.0 - (Date.now() - Game.variables.startTime), 0.0);
 
-  timeStr += (Math.floor(tmp / 1000)).toString() + ":";
+  timeStr += (Math.floor(tmp / 1000)).toString() + ':';
   tmp -= Math.floor(tmp / 1000) * 1000;
 
-  timeStr += (Math.floor(tmp / 10)).toString() + ":";
+  timeStr += (Math.floor(tmp / 10)).toString() + ':';
   tmp -= Math.floor(tmp / 10) * 10;
 
-  timeStr += tmp.toString();
+  timeStr += tmp;
 
   return timeStr;
 };
@@ -157,7 +157,6 @@ Template.main.results = function() {
   }
 
   return users;
-
 };
 
 Template.main.winner = function() {
@@ -172,10 +171,10 @@ Template.main.roundWinnerScore = function() {
   return scoreWinner;
 };
 
-Template.main.lastRound = function() {
-  Game.dependencies.lastRoundDeps.depend();
+Template.main.onRoundEnd = function() {
+  Game.dependencies.onRoundEndDeps.depend();
 
-  return Game.variables.lastRound;
+  return Game.variables.onRoundEnd;
 };
 
 Template.main.events({
@@ -183,11 +182,11 @@ Template.main.events({
     event.preventDefault();
 
     if (Game.variables.chosenNumber < 0) {
-      Meteor.call('setResult', function(err, number) {
-        if (err) {
-          console.log('An error occured: ' + err);
+      Meteor.call('setResult', function(error, result) {
+        if (error) {
+          console.log('An error occured: ' + error);
         } else {
-          Game.variables.chosenNumber = number;
+          Game.variables.chosenNumber = result;
 
           Game.dependencies.chosenNumberDeps.changed();
         }
@@ -204,7 +203,7 @@ Template.main.events({
   }
 });
 
-RoomStream.on("start", function(roomId, number) {
+RoomStream.on('start', function(roomId, number) {
   Game.variables.currentNumber = number;
   Game.dependencies.currentNumberDeps.changed();
 
@@ -225,5 +224,5 @@ RoomStream.on('stop', function() {
   Meteor.clearInterval(updateTime);
 
   Game.resetVariables();
-  Game.variables.lastRound = 1;
+  Game.variables.onRoundEnd = 1;
 });
