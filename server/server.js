@@ -84,7 +84,7 @@ Meteor.methods({
 
     return room.currentNumber;
   },
-  
+
   /* Start game function, called by host */
   startGame: function() {
     var user = Meteor.user();
@@ -150,8 +150,7 @@ var goRound = function(room) {
     Rooms.update(
       { _id: room._id },
       { $set: { currentNumber: number,
-                numbersLeft: (croom.numbersLeft - 1) }
-      }
+                numbersLeft: (croom.numbersLeft - 1) } }
     );
 
     RoomStream.emit('start', room._id, number);
