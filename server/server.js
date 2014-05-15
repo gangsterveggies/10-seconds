@@ -67,7 +67,7 @@ Meteor.methods({
   setResult: function() {
     var user = Meteor.user();
 
-    if (!user || user.roomId === "") {
+    if (!user || user.roomId === '') {
       return 0;
     }
 
@@ -89,7 +89,7 @@ Meteor.methods({
   startGame: function() {
     var user = Meteor.user();
 
-    if (!user || user.roomId === "") {
+    if (!user || user.roomId === '') {
       return;
     }
 
@@ -120,7 +120,7 @@ Meteor.methods({
   stopGame: function() {
     var user = Meteor.user();
 
-    if (!user || user.roomId === "") {
+    if (!user || user.roomId === '') {
       return;
     }
 

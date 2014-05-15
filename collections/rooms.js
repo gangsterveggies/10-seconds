@@ -2,13 +2,13 @@ Rooms = new Meteor.Collection('rooms');
 
 Rooms.allow({
   insert: function(userId, room) {
-    return true;//Meteor.user() && userId === room.hostId && Meteor.userId() === room.hostId && room.users.length === 0;
+    return true;
   }
 });
 
 Rooms.deny({
   update: function(userId, room, fieldNames) {
-    return true;//(_.without(fieldNames, 'users').length > 0) && userId === Meteor.userId();
+    return true;
   }
 });
 
