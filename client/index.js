@@ -2,22 +2,24 @@ Meteor.subscribe('ownUser');
 Meteor.subscribe('rooms');
 Meteor.subscribe('users');
 
-var gameVariables = {
-  currentNumber: 0,
-  chosenNumber: -1,
-  startTime: -1,
-  lastRound: 0,
-  scoreWinner: -1,
-  updateTime: 0,
-  inGame: false
-};
+var Game = {
+  variables: {
+    currentNumber: 0,
+    chosenNumber: -1,
+    startTime: -1,
+    lastRound: 0,
+    scoreWinner: -1,
+    updateTime: 0,
+    inGame: false
+  },
 
-var gameDependencies = {
-  currentNumberDeps: new Deps.Dependency,
-  chosenNumberDeps: new Deps.Dependency,
-  timeLeftDeps: new Deps.Dependency,
-  lastRoundDeps: new Deps.Dependency,
-  inGameDeps: new Deps.Dependency
+  dependencies: {
+    currentNumberDeps: new Deps.Dependency,
+    chosenNumberDeps: new Deps.Dependency,
+    timeLeftDeps: new Deps.Dependency,
+    lastRoundDeps: new Deps.Dependency,
+    inGameDeps: new Deps.Dependency
+  }
 };
 
 RoomStream = new Meteor.Stream('room_streams');
@@ -63,34 +65,34 @@ Template.router.inRoom = function() {
 };
 
 Template.main.currentNumber = function() {
-  gameDependencies.currentNumberDeps.depend();
+  Game.dependencies.currentNumberDeps.depend();
 
-  return gameVariables.currentNumber.toString();
+  return Game.variables.currentNumber.toString();
 };
 
 Template.main.chosenNumber = function() {
-  gameDependencies.chosenNumberDeps.depend();
+  Game.dependencies.chosenNumberDeps.depend();
 
-  return gameVariables.chosenNumber.toString();
+  return Game.variables.chosenNumber.toString();
 };
 
 Template.main.chosen = function() {
-  gameDependencies.chosenNumberDeps.depend();
+  Game.dependencies.chosenNumberDeps.depend();
 
-  return gameVariables.chosenNumber >= 0;
+  return Game.variables.chosenNumber >= 0;
 };
 
 Template.main.inGame = function() {
-  gameDependencies.inGameDeps.depend();
+  Game.dependencies.inGameDeps.depend();
 
-  return gameVariables.inGame > 0;
+  return Game.variables.inGame > 0;
 };
 
 Template.main.currentTime = function() {
-  gameDependencies.timeLeftDeps.depend();
+  Game.dependencies.timeLeftDeps.depend();
 
   var timeStr = "";
-  var tmp = Math.max(10000.0 - (Date.now() - gameVariables.startTime), 0.0);
+  var tmp = Math.max(10000.0 - (Date.now() - Game.variables.startTime), 0.0);
 
   timeStr += (Math.floor(tmp / 1000)).toString() + ":";
   tmp -= Math.floor(tmp / 1000) * 1000;
@@ -161,23 +163,23 @@ Template.main.roundWinnerScore = function() {
 };
 
 Template.main.lastRound = function() {
-  gameDependencies.lastRoundDeps.depend();
+  Game.dependencies.lastRoundDeps.depend();
 
-  return gameVariables.lastRound;
+  return Game.variables.lastRound;
 };
 
 Template.main.events({
   'click #choose-number': function(event) {
     event.preventDefault();
 
-    if (gameVariables.chosenNumber < 0) {
+    if (Game.variables.chosenNumber < 0) {
       Meteor.call('setResult', function(err, number) {
         if (err) {
           console.log('An error occured: ' + err);
         } else {
-          gameVariables.chosenNumber = number;
+          Game.variables.chosenNumber = number;
 
-          gameDependencies.chosenNumberDeps.changed();
+          Game.dependencies.chosenNumberDeps.changed();
         }
       });
     }
@@ -193,36 +195,36 @@ Template.main.events({
 });
 
 RoomStream.on("start", function(roomId, number) {
-  gameVariables.currentNumber = number;
-  gameDependencies.currentNumberDeps.changed();
+  Game.variables.currentNumber = number;
+  Game.dependencies.currentNumberDeps.changed();
 
-  if (gameVariables.startTime < 0) {
-    gameVariables.startTime = Date.now();
+  if (Game.variables.startTime < 0) {
+    Game.variables.startTime = Date.now();
 
-    gameVariables.inGame = true;
-    gameDependencies.inGameDeps.changed();
+    Game.variables.inGame = true;
+    Game.dependencies.inGameDeps.changed();
   }
 
-  Meteor.clearInterval(gameVariables.updateTime);
+  Meteor.clearInterval(Game.variables.updateTime);
   updateTime = Meteor.setInterval(function() {
-    gameDependencies.timeLeftDeps.changed();
+    Game.dependencies.timeLeftDeps.changed();
   }, 100);
 });
 
 RoomStream.on("stop", function() {
   Meteor.clearInterval(updateTime);
 
-  gameVariables.currentNumber = 0;
-  gameDependencies.currentNumberDeps.changed();
+  Game.variables.currentNumber = 0;
+  Game.dependencies.currentNumberDeps.changed();
 
-  gameVariables.chosenNumber = -1;
-  gameDependencies.chosenNumberDeps.changed();
+  Game.variables.chosenNumber = -1;
+  Game.dependencies.chosenNumberDeps.changed();
 
-  gameVariables.startTime = -1;
+  Game.variables.startTime = -1;
 
-  gameVariables.inGame = false;
-  gameDependencies.inGameDeps.changed();
+  Game.variables.inGame = false;
+  Game.dependencies.inGameDeps.changed();
 
-  gameVariables.lastRound = 1;
-  gameDependencies.lastRoundDeps.changed();
+  Game.variables.lastRound = 1;
+  Game.dependencies.lastRoundDeps.changed();
 });
