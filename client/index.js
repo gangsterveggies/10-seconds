@@ -195,11 +195,19 @@ Template.main.events({
   },
 
   'click #start-game-button': function() {
-    Meteor.call('startGame');
+    Meteor.call('startGame', function(error, result) {
+      if (error) {
+        console.log(error);
+      }
+    });
   },
 
   'click #stop-game-button': function() {
-    Meteor.call('stopGame');
+    Meteor.call('stopGame', function(error, result) {
+      if (error) {
+        console.log(error);
+      }
+    });
   }
 });
 
