@@ -215,6 +215,7 @@ RoomStream.on('start', function(roomId, number) {
   }
 
   Meteor.clearInterval(Game.variables.updateTime);
+
   updateTime = Meteor.setInterval(function() {
     Game.dependencies.timeLeftDeps.changed();
   }, 100);

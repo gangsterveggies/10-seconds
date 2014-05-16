@@ -26,8 +26,7 @@ RoomStream.permissions.write(function(eventName, roomId, arg1) {
   return false;
 }, false);
 
-
-var roomInterval = { };
+var roomIntervals = { };
 
 /* Paredes Distribution */
 var getNumber = function() {
@@ -48,17 +47,7 @@ var gameOver = function(room) {
   );
 };
 
-var resetResults = function() {
-  Meteor.users.update(
-    { },
-    { $set: { result: 0, played: false, roomId: 0 } },
-    { multi: true }
-  );
-};
-
-
 Meteor.startup(function() {
-  resetResults();
   Rooms.remove({ });
 });
 
@@ -130,31 +119,32 @@ Meteor.methods({
       return;
     }
 
-    Meteor.clearInterval(roominterval[room._id]);
+    Meteor.clearInterval(roomIntervals[room._id]);
     delete sessionHash[user._id];
     gameOver(room._id);
   }
 });
 
 var goRound = function(room) {
-  var croom = Rooms.findOne(room._id);
+  var currentRoom = Rooms.findOne(room._id);
 
-  if (croom.numbersLeft === 0) {
-    Meteor.clearTimeout(roomInterval[room._id]);
-    delete roomInterval[room._id];
+  if (currentRoom.numbersLeft === 0) {
+    Meteor.clearTimeout(roomIntervals[room._id]);
+    delete roomIntervals[room._id];
 
-    gameOver(croom);
+    gameOver(currentRoom);
   } else {
     var number = getNumber();
 
     Rooms.update(
       { _id: room._id },
       { $set: { currentNumber: number,
-                numbersLeft: (croom.numbersLeft - 1) } }
+                numbersLeft: currentRoom.numbersLeft - 1 } }
     );
 
     RoomStream.emit('start', room._id, number);
-    roomInterval[room._id] = Meteor.setTimeout(function() {
+
+    roomIntervals[room._id] = Meteor.setTimeout(function() {
       goRound(room);
     }, 1000);
   }
