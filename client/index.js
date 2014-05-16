@@ -50,7 +50,7 @@ Template.room.events({
   'click .join-button': function(event) {
     event.preventDefault();
 
-    Meteor.call('join', this._id, function(error) {
+    Meteor.call('joinRoom', this._id, function(error) {
       if (error) {
         throwError(error.reason);
       }
@@ -62,7 +62,7 @@ Template.roomList.events({
   'submit form': function(event) {
     event.preventDefault();
 
-    Meteor.call('create', function(error) {
+    Meteor.call('createRoom', function(error) {
       if (error) {
         throwError(error.reason);
       }

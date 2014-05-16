@@ -47,7 +47,16 @@ var gameOver = function(room) {
   );
 };
 
+var resetResults = function() {
+  Meteor.users.update(
+    { },
+    { $set: { result: 0, played: false, roomId: 0 } },
+    { multi: true }
+  );
+};
+
 Meteor.startup(function() {
+  resetResults();
   Rooms.remove({ });
 });
 

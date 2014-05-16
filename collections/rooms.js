@@ -13,7 +13,7 @@ Rooms.deny({
 });
 
 Meteor.methods({
-  create: function() {
+  createRoom: function() {
     var user = Meteor.user();
 
     if (!user) {
@@ -41,7 +41,7 @@ Meteor.methods({
     );
   },
 
-  join: function(roomId) {
+  joinRoom: function(roomId) {
     var user = Meteor.user();
     var room = Rooms.findOne(roomId);
 
@@ -71,7 +71,7 @@ Meteor.methods({
     return;
   },
 
-  exit: function() {
+  exitRoom: function() {
     var user = Meteor.user();
 
     if (!user) {
