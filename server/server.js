@@ -65,7 +65,7 @@ Meteor.methods({
   setResult: function() {
     var user = Meteor.user();
 
-    if (!user || user.roomId === '' || !user.played) {
+    if (!user || user.roomId === '' || user.played) {
       return 0;
     }
 
