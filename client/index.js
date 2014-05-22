@@ -181,7 +181,7 @@ Template.main.events({
   'click #choose-number': function(event) {
     event.preventDefault();
 
-    if (Game.variables.chosenNumber < 0) { // FIXME Client side??
+    if (Game.variables.chosenNumber < 0) {
       Meteor.call('setResult', function(error, result) {
         if (error) {
           console.log('An error occured: ' + error);
